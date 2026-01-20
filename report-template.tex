@@ -134,7 +134,7 @@ The training set is further divided into training and validation subsets using a
 
 \subsection{Gradient Boosting Classifier}
 
-For heartbeat classification, we employ a gradient boosting model based on decision trees, specifically the \texttt{HistGradientBoostingClassifier} from the scikit-learn library. Gradient boosting builds an ensemble of weak learners in a sequential manner, where each new tree attempts to correct the errors made by the previous ensemble. This method is well suited for tabular data and can capture non-linear relationships between input features.
+For heartbeat classification, I employ a gradient boosting model based on decision trees, specifically the \texttt{HistGradientBoostingClassifier} from the scikit-learn library. Gradient boosting builds an ensemble of weak learners in a sequential manner, where each new tree attempts to correct the errors made by the previous ensemble. This method is well suited for tabular data and can capture non-linear relationships between input features.
 
 The model is trained using the multinomial log-loss objective, appropriate for multi-class classification. The main hyperparameters include the learning rate, maximum number of boosting iterations, tree depth, and regularization terms controlling model complexity.
 
