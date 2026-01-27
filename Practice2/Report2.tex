@@ -1,0 +1,173 @@
+\documentclass[conference]{IEEEtran}
+
+% ================= Packages =================
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% ================= Title =================
+\title{Automated Measurement of Fetal Head Circumference\\
+Using Ultrasound Images}
+
+\author{
+\IEEEauthorblockN{Ho Huyen Chau -- 23BI14067}
+\IEEEauthorblockA{
+Machine Learning in Medicine 2026\\
+University of Science and Technology of Hanoi (USTH)\\
+Email: chauh.23bi14067@usth.edu.vn
+}
+}
+
+\begin{document}
+\maketitle
+
+% ================= Abstract =================
+\begin{abstract}
+Fetal head circumference (HC) is a key biometric measurement used in prenatal assessment. This report presents a simple machine learning approach for estimating fetal head circumference from 2D ultrasound images. Handcrafted image features are extracted and used to train a regression model. Experimental results demonstrate that the proposed baseline method achieves reasonable performance while maintaining simplicity and interpretability.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Fetal head circumference, ultrasound imaging, regression, machine learning, Random Forest
+\end{IEEEkeywords}
+
+% ================= Introduction =================
+\section{Introduction}
+Fetal head circumference measurement plays an important role in monitoring fetal growth and detecting potential abnormalities during pregnancy. Traditionally, HC is measured manually from ultrasound images, which is time-consuming and subject to inter-observer variability.
+
+Recent studies have explored automated approaches based on deep learning and image segmentation. However, such methods often require large datasets and complex models. In this work, I focus on a simpler machine learning approach that estimates HC using handcrafted image features and a regression model.
+
+% ================= Dataset =================
+\section{Dataset Description}
+The HC18 Grand Challenge dataset was used in this study. The data is divided into a training set of 999 images and a test set of 335 images. The size of each 2D ultrasound image is 800 by 540 pixels with a pixel size ranging from 0.052 to 0.326 mm. The pixel size for each image can be found in the two csv files. 
+
+Table~\ref{tab:dataset_files} summarizes the structure of the dataset files.
+
+\begin{table}[H]
+\centering
+\caption{Dataset file structure}
+\label{tab:dataset_files}
+\begin{tabular}{ll}
+\toprule
+\textbf{File / Folder} & \textbf{Description} \\
+\midrule
+training\_set/ & Training ultrasound images \\
+test\_set/ & Test ultrasound images \\
+training\_set\_pixel\_size\_and\_HC.csv & Metadata and HC labels for training \\
+test\_set\_pixel\_size.csv & Metadata for test images \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Additionally, only the training set includes ground-truth HC values with manual annotation, while the test set is used for prediction.
+
+\subsection{Dataset Statistics}
+Table~\ref{tab:dataset_stats} summarizes the key statistics of the dataset.
+
+\begin{table}[H]
+\centering
+\caption{Dataset statistics}
+\label{tab:dataset_stats}
+\begin{tabular}{lc}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Training images & 999 \\
+Test images & 335 \\
+HC min (mm) & 44.3 \\
+HC max (mm) & 346.4 \\
+HC mean (mm) & 174.4 \\
+HC std (mm) & 65.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The dataset exhibits a wide variation in head circumference values, which makes the regression task non-trivial.
+
+% ================= Methodology =================
+\section{Methodology}
+
+\subsection{Preprocessing}
+All images were converted to grayscale, resized to a fixed resolution, and normalized to the range $[0,1]$.
+
+\subsection{Feature Extraction}
+Handcrafted features were extracted to represent intensity and structural characteristics of the ultrasound images. These include intensity statistics, threshold-based area ratios, gradient magnitude statistics, and horizontal and vertical projection features. Pixel size information provided by the dataset was also included.
+
+\subsection{Regression Model}
+In this study, fetal head circumference estimation is formulated as a supervised regression problem, with the goal is to predict a continuous-valued target (HC in millimeters) from image-derived features. Given an input feature vector extracted from an ultrasound image, the regression model learns a mapping function that approximates the underlying relationship between image characteristics and head circumference measurements.
+
+A Random Forest Regressor was selected as the prediction model. Random Forest is an ensemble learning method that combines multiple decision trees trained on different bootstrap samples of the data. Each tree independently predicts a head circumference value, and the final prediction is obtained by averaging the outputs of all trees. 
+
+The Random Forest model is suitable for this task for several reasons. First, it can naturally model non-linear relationships between handcrafted image features and the target variable. Second, it is robust to noise and outliers, which are common in ultrasound imaging due to speckle noise and low contrast. Third, it requires minimal feature scaling and hyperparameter tuning, making it well-suited for a simple and interpretable baseline model.
+
+In this work, the extracted image features and pixel size information are provided as input to the Random Forest Regressor, which outputs a continuous prediction of fetal head circumference in millimeters.
+
+
+% ================= Experiments =================
+\section{Experiments and Results}
+
+\subsection{Evaluation Metric}
+Performance was evaluated using Mean Absolute Error (MAE):
+\[
+\text{MAE} = \frac{1}{N} \sum_{i=1}^{N} |y_i - \hat{y}_i|
+\]
+
+\subsection{Results and Hyperparameter Study}
+Table~\ref{tab:results} reports the validation MAE obtained with different hyperparameter settings.
+
+\begin{table}[H]
+\centering
+\caption{Validation MAE with different hyperparameters}
+\label{tab:results}
+\begin{tabular}{ccc}
+\toprule
+Estimators & Max Depth & MAE (mm) \\
+\midrule
+300 & None & 30.13 \\
+500 & None & 30.0323 \\
+300 & 20 & 30.1623 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ================= Discussion =================
+\section{Discussion and Limitations}
+The experimental results show that changing the number of estimators and the maximum tree depth in the Random Forest model leads to only marginal improvements in validation MAE. This indicates that the overall performance is not strongly limited by the model capacity, but rather by limitation of the extracted features.
+
+While these features are sufficient to provide a reasonable baseline, they do not explicitly represent the fetal head contour. As a result, the model is unable to fully exploit deep information that is directly linked to head circumference.
+
+Another limitation is the ultrasound imaging itself. Ultrasound images suffer from strong noise and low contrast, which makes feature extraction difficult. 
+
+
+
+% ================= Conclusion =================
+\section{Conclusion}
+In this work, a simple machine learning approach was proposed for estimating fetal head circumference from 2D ultrasound images. The model achieved a validation MAE of approximately 30 mm, demonstrating that relatively meaningful information related to head circumference can be captured even with a lightweight and interpretable pipeline.
+
+Hyperparameter experiments showed that increasing model complexity does not significantly improve performance, indicating that feature representation is the main limiting factor. Despite its simplicity, the proposed method serves as a strong baseline for automated fetal head circumference estimation. Future work may focus on deep learning-based feature extraction to further improve accuracy.
+
+\begin{thebibliography}{1}
+
+\bibitem{vandenheuvel2018paper}
+T.~L.~A. van~den Heuvel, D.~de~Bruijn, C.~L.~de~Korte, and B.~van~Ginneken,
+``Automated measurement of fetal head circumference using 2D ultrasound images,''
+\emph{PLOS ONE}, vol.~13, no.~8, p.~e0200412, 2018.
+
+\bibitem{vandenheuvel2018dataset}
+T.~L.~A. van~den Heuvel, D.~de~Bruijn, C.~L.~de~Korte, and B.~van~Ginneken,
+``Automated measurement of fetal head circumference using 2D ultrasound images [Data set],''
+\emph{Zenodo}, 2018. Available: \url{http://doi.org/10.5281/zenodo.1322001}
+
+\end{thebibliography}
+
+
+\end{document}
