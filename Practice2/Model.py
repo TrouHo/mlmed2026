@@ -35,7 +35,7 @@ def read_grayscale_image(path: str, size=(256, 256)) -> np.ndarray:
 
 
 def otsu_threshold(x: np.ndarray) -> float:
-    """Simple Otsu threshold for grayscale in [0,1]."""
+    """Simplethreshold for grayscale in [0,1]."""
     # histogram over 256 bins
     hist, bin_edges = np.histogram(x.ravel(), bins=256, range=(0.0, 1.0))
     hist = hist.astype(np.float64)
@@ -54,13 +54,7 @@ def otsu_threshold(x: np.ndarray) -> float:
 
 
 def extract_features(img: np.ndarray) -> np.ndarray:
-    """
-    Handcrafted features (simple, robust):
-    - intensity statistics
-    - thresholded area fractions
-    - gradient energy statistics
-    - projection statistics
-    """
+    
     x = img
     flat = x.ravel()
 
@@ -123,7 +117,7 @@ def build_paths(root: str) -> Paths:
 
 
 def resolve_image_path(img_dir: str, name: str) -> str:
-    # name might already include folder; try direct then join.
+    
     if os.path.exists(name):
         return name
     p = os.path.join(img_dir, name)
