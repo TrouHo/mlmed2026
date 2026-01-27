@@ -1,16 +1,5 @@
 \documentclass[conference]{IEEEtran}
 
-\title{ECG Heartbeat Classification using Gradient Boosting Classifier}
-
-\begin{document}
-
-\maketitle
-
-%============================================================
-% main.tex — IEEEtran split template (ECG Heart / MIT-BIH + LSTM)
-%============================================================
-\documentclass[conference]{IEEEtran}
-
 % -------------------- Packages --------------------
 \usepackage{graphicx}
 \usepackage{float}
@@ -29,42 +18,33 @@
   citecolor=blue
 }
 
-% Figures folder
-\graphicspath{{image/}}
+\graphicspath{{figures/}}
 
 % -------------------- Title --------------------
-\title{ECG Heartbeat Classification using Gradient Boosting Clasifier}
+\title{ECG Heartbeat Classification using Gradient Boosting Classifier}
 
 \author{
-\IEEEauthorblockN{Ho Huyen Chau - 23BI14067}
+\IEEEauthorblockN{Ho Huyen Chau -- 23BI14067}
 \IEEEauthorblockA{
 Machine Learning in Medicine 2026\\
 University of Science and Technology of Hanoi (USTH)\\
 Email: chauhh.23bi14067@usth.edu.vn
 }
 }
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{6pt} % optional: adds small space between paragraphs
 
 \begin{document}
 \maketitle
 
-% Main sections
-\input{sections/1.introduction}
-\input{sections/2.dataset}
-\input{sections/3.methods}
-\input{sections/4.results}
-
-\end{document}
-
+% ================= Introduction =================
 \section{Introduction}
 
-Electrocardiogram (ECG) signals are widely used in clinical practice to analyze the electrical activity of the heart and to detect cardiac abnormalities such as arrhythmias. Automatic ECG heartbeat classification has therefore become an important research topic in medical signal processing, as it can support clinicians by reducing manual workload and improving diagnostic consistency.
+Electrocardiogram (ECG) signals are widely used in clinical practice. Automatic ECG heartbeat classification has therefore become an important research topic in medical signal processing.
 
-Despite significant progress, the classification of heartbeats on the ECG remains a challenging task. Real-world ECG datasets typically exhibit a strong class imbalance, where normal heartbeats dominate the data, while abnormal events occur much less frequently. These challenges make it difficult to design models that perform well in all heartbeat classes.
+Despite significant progress, the classification of heartbeats on the ECG remains a challenging task. Real-world ECG datasets typically exhibit a strong class imbalance, where normal heartbeats dominate the data, while abnormal events occur much less frequently. 
 
-In this work, I study the problem of ECG heartbeat classification using the MIT-BIH Arrhythmia dataset. Each heartbeat is represented as a fixed-length one-dimensional signal, and the task is formulated as a multi-class classification problem with five heartbeat categories. Instead of relying on deep learning models, which often require substantial computational resources, I focus on a classical machine learning approach based on gradient boosting. This choice allows me to analyze the impact of data imbalance and training strategies while maintaining a relatively simple and interpretable classification pipeline.
+In this work, I study the problem of ECG heartbeat classification using the MIT-BIH Arrhythmia dataset. Each heartbeat is represented as a fixed-length one-dimensional signal, and the task is formulated as a multi-class classification problem with five heartbeat categories. I focus on a classical machine learning approach based on gradient boosting. This choice allows me to analyze the impact of data imbalance and training strategies while maintaining a relatively simple classification pipeline.
 
+% ================= Dataset =================
 \section{Dataset Description}
 
 \subsection{MIT-BIH Arrhythmia Dataset}
@@ -74,105 +54,169 @@ The primary dataset used in this study is the MIT-BIH Arrhythmia dataset, origin
 Each heartbeat is represented by 187 sampled amplitude values corresponding to approximately 1.5 seconds of ECG recording at a sampling frequency of 125 Hz. Consequently, each sample consists of 188 columns, where the first 187 columns contain the ECG signal values and the last column corresponds to the class label. The dataset is divided into a training set containing 87,554 samples and a test set containing 21,892 samples.
 
 The classification task involves five heartbeat categories: Normal (N), Supraventricular ectopic (S), Ventricular ectopic (V), Fusion (F), and Unknown (Q).
+
 \subsection{Class Distribution and Imbalance}
 
 A major characteristic of the MIT-BIH dataset is its severe class imbalance. Normal heartbeats account for more than 80\% of the samples in both the training and test sets, while some abnormal classes, such as Fusion beats, represent less than 1\% of the data. This imbalance poses a significant challenge for classification models, as high accuracy can be achieved by predicting only the majority class.
 
-\begin{figure}[H]
+\begin{figure}[th]
     \centering
-    \includegraphics[width=\linewidth]{figures/mitbih_train_distribution.pdf}
+    \includegraphics[width=\linewidth]{mitbih_train_distribution.pdf}
     \caption{Class distribution of the MIT-BIH training set.}
     \label{fig:mitbih_train_dist}
 \end{figure}
 
-Figures~\ref{fig:mitbih_train_dist} and~\ref{fig:mitbih_test_dist} present the class distributions of the training and test sets, respectively, and clearly illustrate the dominance of the Normal class over the minority classes.
-
-\begin{figure}[H]
+\begin{figure}[th]
     \centering
-    \includegraphics[width=\linewidth]{figures/mitbih_test_distribution.pdf}
+    \includegraphics[width=\linewidth]{mitbih_test_distribution.pdf}
     \caption{Class distribution of the MIT-BIH test set.}
     \label{fig:mitbih_test_dist}
 \end{figure}
 
-Figure~\ref{fig:ptb_dist} also indicates a noticeable class imbalance in the PTB dataset although it is less imblanced than MIT-BIH one. 
-
-
-\begin{figure}[H]
+\begin{figure}[th]
     \centering
-    \includegraphics[width=\linewidth]{figures/ptb_distribution.pdf}
+    \includegraphics[width=\linewidth]{ptb_distribution.pdf}
     \caption{Class distribution of the PTB dataset.}
     \label{fig:ptb_dist}
 \end{figure}
 
 \subsection{Visual Exploration of ECG Signals}
 
-To better understand the morphological differences between heartbeat classes, visual inspection of ECG waveforms is performed. Several example heartbeats from each class are shown in Figure~\ref{fig:examples_per_class}. These examples highlight noticeable differences in waveform shape and peak structure among the heartbeat categories.
+To better understand the morphological differences between heartbeat classes, visual inspection of ECG waveforms is performed.
 
-In addition, the mean waveform and the corresponding $\pm 1$ standard deviation band are computed for each class, as illustrated in Figure~\ref{fig:mean_std_per_class}. These visualizations provide insights into both the typical heartbeat morphology and the variability within each class.
-
-\begin{figure}[H]
+\begin{figure}[th]
     \centering
-    \includegraphics[width=\linewidth]{figures/mitbih_examples_per_class.pdf}
+    \includegraphics[width=\linewidth]{mitbih_examples_per_class.pdf}
     \caption{Example ECG heartbeats for each class in the MIT-BIH dataset.}
     \label{fig:examples_per_class}
 \end{figure}
 
-\begin{figure}[H]
+The visual inspection of individual ECG heartbeats reveals noticeable morphological differences among the five classes. Normal beats exhibit a relatively consistent waveform shape, while abnormal classes such as ventricular and supraventricular ectopic beats show irregular patterns. Moreover, fusion and unknown beats display higher variability, reflecting the difficulty of distinguishing these classes.
+
+
+\begin{figure}[th]
     \centering
-    \includegraphics[width=\linewidth]{figures/mitbih_mean_std_per_class.pdf}
+    \includegraphics[width=\linewidth]{mitbih_mean_std_per_class.pdf}
     \caption{Mean ECG waveform and $\pm 1$ standard deviation for each heartbeat class.}
     \label{fig:mean_std_per_class}
 \end{figure}
 
+Meanwhile, the mean ECG waveforms and their corresponding ±1 standard deviation bands provide further insight into class characteristics. Normal heartbeats show lower variability compared to abnormal classes, while ectopic and fusion beats present wider standard deviation bands. This presents the challenge posed by overlapping patterns between classes.
+
+% ================= Methodology =================
 \section{Methodology}
 
-\subsection{Overall Pipeline}
+\subsection{Preprocessing}
 
-The overall ECG classification pipeline consists of four main steps: data preprocessing, train--validation splitting, model training, and performance evaluation. Each ECG heartbeat is treated as a fixed-length feature vector of 187 signal values. No handcrafted features are extracted; instead, the raw normalized waveform samples are directly used as input to the classifier.
+Each ECG heartbeat in the dataset is represented as a one-dimensional signal consisting of 187 sampled amplitude values. The signals are provided in a preprocessed form, where heartbeats have already been segmented and normalized. No additional filtering or signal transformation is applied in this study. The raw waveform samples are directly used as input features for the classification model.
 
-The training set is further divided into training and validation subsets using a stratified split to preserve the original class distribution. The validation set is used to monitor model performance and guide hyperparameter selection, while the test set is kept strictly unseen until final evaluation.
+\subsection{Feature Representation}
 
-\subsection{Gradient Boosting Classifier}
+No handcrafted features are extracted from the ECG signals. Instead, each heartbeat is treated as a fixed-length feature vector containing the original waveform values. This representation preserves the temporal shape of the ECG signal while keeping the modeling pipeline simple and transparent.
 
-For heartbeat classification, I employ a gradient boosting model based on decision trees, specifically the \texttt{HistGradientBoostingClassifier} from the scikit-learn library. Gradient boosting builds an ensemble of weak learners in a sequential manner, where each new tree attempts to correct the errors made by the previous ensemble. This method is well suited for tabular data and can capture non-linear relationships between input features.
+\subsection{Classification Model}
 
-The model is trained using the multinomial log-loss objective, appropriate for multi-class classification. The main hyperparameters include the learning rate, maximum number of boosting iterations, tree depth, and regularization terms controlling model complexity.
+Heartbeat classification is performed using a gradient boosting model based on decision trees. Specifically, the \texttt{HistGradientBoostingClassifier} from the scikit-learn library is employed. The task is formulated as a supervised multi-class classification problem with five output classes corresponding to different heartbeat types.
 
-\subsection{Hyperparameter Configuration}
+The gradient boosting algorithm builds an ensemble of decision trees in a sequential manner, where each new tree is trained to correct the errors of the previous ensemble. This method is well suited for tabular data and can model non-linear relationships between ECG waveform values and heartbeat classes.
 
-After empirical experimentation, the final model configuration uses a learning rate of 0.1 and a maximum of 300 boosting iterations. Tree complexity is controlled through a maximum depth of 6, a maximum of 31 leaf nodes, and a minimum of 20 samples per leaf. An L2 regularization term is applied to reduce overfitting.
+\subsection{Model Configuration}
 
-Early stopping is enabled based on the validation loss, with a validation fraction of 10\% and a patience of 20 iterations. This mechanism stops training when no significant improvement is observed, preventing unnecessary model complexity growth.
+The model is trained using the multinomial log-loss objective. The learning rate is set to 0.1, and the maximum number of boosting iterations is set to 300. Tree complexity is controlled by limiting the maximum tree depth to 6, the maximum number of leaf nodes to 31, and enforcing a minimum of 20 samples per leaf node. An L2 regularization term is applied to reduce overfitting.
 
-\subsection{Handling Class Imbalance}
-
-Due to the strong class imbalance in the dataset, multiple sample weighting strategies are explored during training. These strategies aim to increase the contribution of minority classes during optimization. Model selection is primarily guided by the macro-averaged F1 score on the validation set, which equally weights all classes regardless of their frequency and provides a more informative measure than accuracy alone in imbalanced settings.
+Early stopping is enabled based on validation loss, using 10\% of the training data as a validation set. Training is stopped if no improvement is observed for 20 consecutive iterations.
 
 \subsection{Evaluation Metrics}
 
-Model performance is evaluated using accuracy, macro-averaged F1 score, and class-wise precision and recall. In addition, confusion matrices are analyzed to better understand misclassification patterns and to identify whether the model disproportionately favors the majority class.
+Model performance is evaluated using accuracy and macro-averaged F1 score. Accuracy measures the proportion of correctly classified samples over the entire dataset, while the macro-averaged F1 score computes the F1 score independently for each class and then averages them with equal weight.
 
+Due to the strong class imbalance in the dataset, macro-F1 is considered a more informative metric than accuracy, as it reflects the model’s performance on minority heartbeat classes. Confusion matrices are also used to visualize the final results. 
+
+
+
+% ================= Results =================
 \section{Results}
 
-\subsection{Validation Performance}
+\subsection{Validation Results}
 
-On the validation set, the gradient boosting classifier achieves a high accuracy of 95.23\% and a macro-averaged F1 score of 81.25\%. This result initially suggests that the model is able to fit the training data and capture relevant patterns in the ECG signals. However, given the severe class imbalance of the dataset, these metrics must be interpreted with caution.
+Table~\ref{tab:val_results} reports the performance of the gradient boosting classifier on the validation set. The model achieves a high validation accuracy of 95.23\% and a macro-averaged F1 score of 81.25\%, suggesting that it fits the training data well under the validation setting.
 
-\subsection{Test Set Performance}
+\begin{table}[th]
+\centering
+\caption{Validation performance of the Gradient Boosting classifier.}
+\label{tab:val_results}
+\begin{tabular}{lcc}
+\toprule
+Metric & Value \\
+\midrule
+Accuracy & 0.9523 \\
+Macro-F1 score & 0.8125 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-When evaluated on the independent test set, the model achieves an overall accuracy of 81.6\%. However, the macro-averaged F1 score drops significantly to 18.17\%, indicating poor performance on minority classes. This discrepancy between accuracy and macro-F1 highlights the limitations of accuracy as a performance metric in imbalanced classification problems.
+\subsection{Test Results}
 
-The detailed classification report reveals that the model predicts the majority Normal class with very high recall, while the minority classes are almost entirely misclassified. Precision and recall for classes S, V, F, and Q are close to zero, indicating that the model effectively collapses to predicting the majority class.
+The performance of the final model on the independent test set is summarized in Table~\ref{tab:test_results}. While the overall accuracy remains relatively high at 81.6\%, the macro-averaged F1 score drops significantly to 18.17\%, indicating poor generalization to minority heartbeat classes.
 
-\subsection{Confusion Matrix Analysis}
+\begin{table}[th]
+\centering
+\caption{Test performance of the Gradient Boosting classifier.}
+\label{tab:test_results}
+\begin{tabular}{lcc}
+\toprule
+Metric & Value \\
+\midrule
+Accuracy & 0.8160 \\
+Macro-F1 score & 0.1817 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The confusion matrix further confirms this behavior. Most test samples from minority classes are incorrectly predicted as Normal heartbeats. Very few samples are assigned to non-Normal classes, resulting in extremely low recall for abnormal heartbeat categories. This outcome demonstrates that the model has learned a biased decision boundary favoring the dominant class.
+\subsection{Confusion matrix}
 
-\subsection{Discussion of Overfitting and Class Collapse}
+Table~\ref{tab:confusion_matrix} presents the confusion matrix of the Gradient Boosting classifier on the test set. Rows correspond to true labels, while columns correspond to predicted labels.
 
-Although early stopping and regularization are applied, the model still exhibits a strong tendency to overfit the majority class. The high validation macro-F1 score suggests that the validation split may not fully represent the difficulty of the test distribution, especially for rare classes. As a result, the model fails to generalize its decision boundaries to minority heartbeat types.
+\begin{table}[th]
+\centering
+\caption{Confusion matrix on the MIT-BIH test set.}
+\label{tab:confusion_matrix}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{c|ccccc}
+\toprule
+True / Pred & N & S & V & F & Q \\
+\midrule
+N (Normal) & 17860 & 258 & 0 & 0 & 0 \\
+S (Supra.) & 552 & 4 & 0 & 0 & 0 \\
+V (Ventric.) & 1429 & 19 & 0 & 0 & 0 \\
+F (Fusion) & 162 & 0 & 0 & 0 & 0 \\
+Q (Unknown) & 1608 & 0 & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
-These results emphasize the importance of robust imbalance handling strategies and careful validation design when applying classical machine learning models to highly imbalanced medical datasets. While gradient boosting provides strong performance on the dominant class, additional techniques such as more advanced resampling strategies or alternative model architectures may be required to achieve balanced performance across all heartbeat categories.
+The confusion matrix shows that the classifier overwhelmingly predicts the Normal class, with almost all minority-class samples misclassified as Normal. This confirms that the model suffers from severe class bias and fails to learn discriminative patterns for rare heartbeat categories.
 
+
+\begin{thebibliography}{9}
+
+\bibitem{goldberger2000mitbih}
+A.~L. Goldberger, L.~A. Amaral, L.~Glass, J.~M. Hausdorff, P.~C. Ivanov,
+R.~G. Mark, J.~E. Mietus, G.~B. Moody, C.-K. Peng, and H.~E. Stanley,
+``PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals,''
+\emph{Circulation}, vol.~101, no.~23, pp.~e215--e220, 2000.
+
+\bibitem{shayanfazeli_kaggle}
+S.~Fazeli,
+``Heartbeat Classification Dataset,''
+Kaggle, 2018. Available: \url{https://www.kaggle.com/datasets/shayanfazeli/heartbeat}
+
+\bibitem{ecg_classification_arxiv}
+S.~Fazeli,
+``ECG Heartbeat Classification: A Deep Learning Approach,''
+arXiv preprint arXiv:1805.00794, 2018. Available: \url{https://arxiv.org/abs/1805.00794}
+
+\end{thebibliography}
 
 \end{document}
