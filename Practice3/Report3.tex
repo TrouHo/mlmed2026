@@ -65,7 +65,7 @@ Normal & 932 \\
 \end{table}
 
 
-\subsection{Empty Infection Masks and Motivation for COVID-19 Only}
+\subsection{Empty Infection Masks}
 When scanning infection masks in the training set, I found that 1864 out of 3728 masks are empty (all-zero). This strongly suggests that many samples (especially Normal and often Non-COVID) contain no annotated infection regions. Table~\ref{tab:empty_masks} summarizes this observation.
 
 \begin{table}[ht]
@@ -83,7 +83,7 @@ Empty mask ratio & 0.50 \\
 \end{tabular}
 \end{table}
 
-Therefore, I decided not to train on Normal and Non-COVID samples as empty infection masks can bias the model toward predicting background-only masks (trivial solution). It means to ensure meaningful learning of infection patterns, I restrict training and validation to COVID-19 samples for the infection segmentation task.
+Therefore, I decided to train the model for two different circumstances: COVID-19 only and full three classes included. 
 
 % -------------------------
 \section{Methodology}
@@ -110,35 +110,36 @@ I evaluate segmentation performance using the Dice coefficient, which measures o
 Dice is commonly used in medical segmentation because it is sensitive to class imbalance.
 
 \subsection{Main Result}
-Using only COVID-19 samples with a subset of 600 training images and 100 validation images at $256 \times 256$ resolution, the best validation Dice score achieved is:
-\begin{center}
-\textbf{Best validation Dice = 0.7005}.
-\end{center}
 
-\subsection{Hyperparameter Comparison}
-To demonstrate the effect of different settings, Table~\ref{tab:hyperparam} compares two configurations that I tested. Because the objective is to present the workflow under limited resources, I report results obtained from small subsets rather than full-dataset training.
+Two training strategies are investigated in this study. In the first experiment, the model is trained using only COVID-19 images, where infection regions are more consistently present. In the second experiment, the model is trained on the full dataset, including COVID-19, Non-COVID, and Normal images.
+
+Table~\ref{tab:results_compare} summarizes the best validation Dice scores obtained in the two settings.
 
 \begin{table}[ht]
 \centering
-\caption{Results with different training settings (COVID-19 only).}
-\label{tab:hyperparam}
-\begin{tabular}{c c c c}
+\caption{Comparison of segmentation results under different training datasets.}
+\label{tab:results_compare}
+\begin{tabular}{l c}
 \toprule
-\textbf{IMG\_SIZE} & \textbf{\#Train} & \textbf{\#Val} & \textbf{Best Val Dice} \\
+\textbf{Training Dataset} & \textbf{Best Validation Dice} \\
 \midrule
-128 & 300 & 50 & 0.6787 \\
-256 & 600 & 100 & 0.7005 \\
+COVID-19 only & 0.74 \\
+Full dataset (3 classes) & 0.82 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+
 % -------------------------
 \section{Discussion and Limitations}
-Although the model achieves a reasonable Dice score under constrained settings, several limitations remain. First, experiments are conducted on reduced subsets of the dataset, which may limit generalization. Second, resizing images to low or medium resolution (e.g., $128\times128$ or $256\times256$) may reduce boundary precision for small infection regions. Finally, no advanced architectures or post-processing methods are applied. Future improvements could include training on larger subsets, using higher resolution, incorporating lung masks as a region-of-interest constraint, or adopting stronger segmentation backbones.
+The results show that training on the full dataset leads to a higher Dice score compared to using only COVID-19 samples. Although Non-COVID and Normal images often contain empty infection masks, their inclusion helps the model better distinguish true infection regions from normal lung structures. As a result, the model trained on all classes exhibits improved generalization and fewer false positive predictions.
+
 
 % -------------------------
 \section{Conclusion}
-This report demonstrates an end-to-end pipeline for COVID-19 infection segmentation on chest X-ray images using the COVID-QU-Ex dataset. I implement a lightweight U-Net model with a BCE+Dice loss and evaluate performance using the Dice coefficient. Despite limited resources and subset training, the model achieves a best validation Dice score of 0.7005 and produces meaningful qualitative predictions.
+This work presents a U-Net-based approach for COVID-19 infection segmentation from chest X-ray images using the COVID-QU-Ex dataset. Experimental results demonstrate that training on the full dataset yields better segmentation performance than training on COVID-19 cases alone. Despite its simplicity, the proposed model achieves reasonable Dice scores and demonstrates the feasibility of infection localization from chest X-ray images.
+
+
 
 %  References
 \begin{thebibliography}{1}
