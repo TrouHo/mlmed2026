@@ -1,0 +1,238 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+
+\title{Volumetric (3D) Pulmonary Nodule Detection on a LUNA16 Subset Using a Lightweight 3D CNN}
+
+\author{
+Ho Huyen Chau\\
+Machine Learning in Medicine 2026\\
+University of Science and Technology of Hanoi (USTH)\\
+Email: chauhh.23bi14067@usth.edu.vn
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report presents a practical implementation of volumetric (3D) pulmonary nodule detection using a subset of the LUNA16 dataset. Due to computational constraints, only 12 CT scans available in the lab setting were used. Each CT volume is processed using metadata from \texttt{.mhd/.raw} files and annotations from \texttt{annotations.csv}. A lightweight 3D convolutional neural network is trained to perform binary classification (nodule presence in a patch) and center offset regression. Patch-level localization error is reported, and a whole-scan grid-based detection demo is presented. Results show accurate localization inside positive patches but limited performance in whole-volume candidate ranking.
+\end{abstract}
+
+\section{Introduction}
+
+Pulmonary nodule detection from CT volumes is a key step in lung cancer screening. The LUNA16 dataset provides annotated 3D chest CT scans derived from LIDC-IDRI. 
+
+In this lab assignment, a lightweight 3D detection pipeline is implemented under limited computational resources. Only the scans provided in the shared folder are used. The objective is to build a volumetric model that predicts 3D nodule locations from CT volumes and demonstrate detection behavior on full scans.
+
+\section{Dataset Description}
+
+\subsection{Available Data}
+
+The dataset contains:
+
+\begin{itemize}
+    \item \texttt{annotations.csv}: nodule center coordinates (world coordinates) and diameter in millimeters.
+    \item \texttt{.mhd} files: CT metadata (size, spacing, origin, direction).
+    \item \texttt{.raw} files: voxel intensity values.
+\end{itemize}
+
+Although the CSV file contains annotations for 601 unique series, only 12 CT scans are available in the lab folder. Therefore, only annotations matching these 12 scans are used.
+
+\begin{table}[H]
+\centering
+\caption{Dataset Availability Summary}
+\begin{tabular}{lc}
+\toprule
+Item & Value \\
+\midrule
+Available CT scans (.mhd/.raw) & 12 \\
+Train scans & 6 \\
+Test scans & 2 \\
+Train annotation rows & 10 \\
+Test annotation rows & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Image Characteristics}
+
+From metadata inspection:
+
+\begin{itemize}
+    \item Intensity range observed: -1000 to 3000
+    \item Direction matrix: approximately identity
+    \item World-to-voxel mapping performed using SimpleITK
+\end{itemize}
+
+CT volumes are clipped to [-1000, 3000] and normalized to [0,1].
+
+\section{Methodology}
+
+\subsection{Patch Generation}
+
+A patch-based approach is used:
+
+\begin{itemize}
+    \item Patch size: $64 \times 64 \times 64$
+    \item Positive patches: centered at annotated nodule centers
+    \item Negative patches: sampled inside a rough lung mask and far from annotated centers
+\end{itemize}
+
+World coordinates are converted to voxel indices using SimpleITK.
+
+\subsection{Model Architecture}
+
+A lightweight 3D CNN is implemented. The architecture consists of:
+
+\begin{itemize}
+    \item 3D convolution blocks with InstanceNorm and ReLU
+    \item Max pooling layers
+    \item Global average pooling
+    \item Two output heads:
+    \begin{itemize}
+        \item Classification head: predicts probability $p$
+        \item Regression head: predicts normalized offset $(dx, dy, dz)$
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{c}
+Input (1 × 64³) \\
+$\downarrow$ Conv3D + Pool \\
+$\downarrow$ Conv3D + Pool \\
+$\downarrow$ Conv3D \\
+$\downarrow$ Global Avg Pool \\
+$\rightarrow$ FC (Classification) \\
+$\rightarrow$ FC (Offset Regression)
+\end{tabular}
+\caption{Lightweight 3D CNN architecture}
+\end{figure}
+
+\subsection{Loss Function}
+
+The total loss is:
+
+\[
+L = L_{cls} + L_{reg}
+\]
+
+where:
+
+\begin{itemize}
+    \item $L_{cls}$: Binary Cross-Entropy
+    \item $L_{reg}$: Smooth L1 loss (applied only to positive patches)
+\end{itemize}
+
+\subsection{Training Setup}
+
+\begin{itemize}
+    \item Optimizer: Adam
+    \item Learning rate: $10^{-3}$
+    \item Epochs: 15
+    \item Hardware: Google Colab (T4 GPU)
+\end{itemize}
+
+Training loss decreased from 0.6704 to 0.5961 over 15 epochs. Validation loss fluctuated around 0.61--0.65.
+
+\section{Results}
+
+\subsection{Training Behavior}
+
+Table~\ref{tab:training} summarizes selected epochs during training. Only representative epochs are shown for brevity.
+
+\begin{table}[H]
+\centering
+\caption{Training and Validation Loss (Selected Epochs)}
+\label{tab:training}
+\begin{tabular}{ccc}
+\toprule
+Epoch & Train Loss & Validation Loss \\
+\midrule
+1  & 0.6704 & 0.6544 \\
+2  & 0.6465 & 0.6424 \\
+3  & 0.6393 & 0.6293 \\
+\vdots & \vdots & \vdots \\
+14 & 0.6169 & 0.6119 \\
+15 & 0.5961 & 0.6200 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Training loss decreases steadily from 0.6704 to 0.5961 over 15 epochs, indicating that the network is able to learn from the available patches. Validation loss fluctuates between 0.61 and 0.65, without strong divergence from training loss. This suggests that the model does not severely overfit, but the small dataset limits further performance gains.
+
+\subsection{Patch-Level Localization}
+
+For positive patches centered around annotated nodules, the mean Euclidean distance between predicted and ground-truth centers is:
+
+\[
+\textbf{Mean localization error = 1.64 voxels}
+\]
+
+Considering typical voxel spacing (approximately 0.8--1.0 mm), this corresponds roughly to 1--2 mm in physical space. 
+
+Qualitative visualizations show that predicted centers closely overlap ground-truth centers in axial, coronal, and sagittal views. This confirms that the offset regression head successfully learns 3D spatial refinement when the patch contains a nodule.
+
+\subsection{Whole-Scan Grid Detection}
+
+Whole-volume inference was performed using grid scanning inside the lung region (step size = 32 voxels). For the demo scan:
+
+\begin{itemize}
+\item Series ID: \texttt{1.3.6.1.4.1.14519.5.2.1.6279.\allowbreak6001.\allowbreak128881800399702510818644205032}
+\item Ground-truth nodules: 2
+\item Grid centers inside lung: 154
+\end{itemize}
+
+Top-ranked predictions are summarized in Table~\ref{tab:wholescan}.
+
+\begin{table}[H]
+\centering
+\caption{Top Whole-Scan Candidates (Demo Scan)}
+\label{tab:wholescan}
+\begin{tabular}{cccc}
+\toprule
+Rank & $p$ & Predicted Center (x,y,z) & Best Dist (mm) \\
+\midrule
+1 & 0.4852 & (33.9, 29.4, 35.2) & 258.93 \\
+2 & 0.4852 & (33.9, 29.4, 67.2) & 233.09 \\
+3 & 0.4852 & (33.9, 29.4, 99.2) & 233.28 \\
+4 & 0.4182 & (33.5, 445.8, 66.2) & 139.05 \\
+5 & 0.4075 & (33.4, 446.0, 98.0) & 137.93 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Predicted probabilities remain between 0.39 and 0.49. The smallest distance to a ground-truth nodule exceeds 130 mm, indicating that none of the top candidates are close to true nodules.
+
+This demonstrates that while the regression mechanism works within positive patches, the model struggles to correctly rank candidate regions in a full-volume setting.
+
+\section{Discussion}
+
+The experimental results reveal a clear contrast between patch-level performance and whole-scan detection performance.
+
+At the patch level, the model achieves a mean localization error of 1.64 voxels, corresponding to approximately 1--2 mm in physical space. This is a small spatial error relative to typical pulmonary nodule sizes, demonstrating that the regression head effectively captures 3D spatial relationships when the nodule is present within the receptive field. The close alignment between predicted and ground-truth centers in visualizations further confirms correct coordinate transformation and volumetric modeling.
+
+However, whole-volume detection remains unreliable. In the demo scan containing two nodules, none of the top-ranked candidates were spatially close to the ground truth, with minimum distances exceeding 130 mm. Additionally, predicted probabilities cluster around 0.4--0.48, indicating weak classification confidence. This suggests that the main limitation lies in candidate selection rather than spatial refinement.
+
+Several factors likely contribute to this limitation. First, only 12 scans were available, with 10 training annotations. Such a small dataset restricts the classifier's ability to learn robust discriminative features. Second, the grid-based scanning approach evaluates many background patches, but the classifier has limited exposure to diverse hard negative examples.
+
+Overall, the model demonstrates correct volumetric regression capability but lacks sufficient data and structural complexity to perform reliable full-volume detection.
+
+\section{Conclusion}
+
+This study implemented a lightweight 3D convolutional neural network for pulmonary nodule detection on a restricted subset of LUNA16. 
+
+The model successfully achieves accurate 3D localization within cropped patches, with a mean error of 1.64 voxels. However, whole-volume grid-based detection is unreliable due to limited training data and weak classification confidence.
+
+The results highlight that effective volumetric detection requires not only accurate regression but also strong candidate generation and ranking mechanisms. Future improvements should focus on increasing dataset size, strengthening classification learning, and adopting multi-stage detection frameworks.
+
+\section*{References}
+
+[1] LUNA16 Grand Challenge. \url{https://luna16.grand-challenge.org/}
+
+\end{document}
